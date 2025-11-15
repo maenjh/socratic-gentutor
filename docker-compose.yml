@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # GenReact Backend
+  genreact_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: genract_moon_back
+    ports:
+      - "5500:5000"
+    environment:
+      - SHARED_MODEL_PATH=/root/.cache/huggingface
+      - HF_HOME=/root/.cache/huggingface
+      - CUDA_VISIBLE_DEVICES=4
+      - SHARED_MODEL_NAME=/root/.cache/huggingface/qwen_instruct
+      - CHATBOT_MODEL_NAME=/root/.cache/huggingface/gpt-oss-120b
+    runtime: nvidia  # NVIDIA GPU 런타임
+    volumes:
+      - ./backend:/app
+      - /../../../edumcp/huggingface_models/qwen_instruct:/root/.cache/huggingface/qwen_instruct  # SharedLLM 모델
+      - /../../../models/openai/gpt-oss-120b:/root/.cache/huggingface/gpt-oss-120b  # 공유 (tokenizer 포함)
+    networks:
+      - genract_moon_net
+    restart: unless-stopped
+
+  # GenReact Frontend (static web)
+  genreact_frontend_web:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: genract_moon_front
+    ports:
+      - "8850:80"
+    depends_on:
+      - genreact_backend
+    networks:
+      - genract_moon_net
+    restart: unless-stopped
+
+networks:
+  genract_moon_net:
+    driver: bridge
+    name: genract_moon_net
+

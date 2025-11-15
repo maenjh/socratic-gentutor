@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.__GENMENTOR_CONFIG__ = {
+            backendBaseUrl: `${window.location.protocol}//${window.location.hostname}:5500/`
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="/static/img/avatar.png" alt="AI Tutor Logo" height="40">
+                <h1>AI Tutor</h1>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="onboarding">
+                    <span class="icon">👋</span>
+                    <span>Onboarding</span>
+                </div>
+                <div class="nav-item" data-page="learning-path">
+                    <span class="icon">🎯</span>
+                    <span>Learning Path</span>
+                </div>
+                <div class="nav-item" data-page="skill-gap">
+                    <span class="icon">📊</span>
+                    <span>Skill Gap</span>
+                </div>
+                <div class="nav-item" data-page="resume-learning">
+                    <span class="icon">📚</span>
+                    <span>Resume Learning</span>
+                </div>
+                <div class="nav-item" data-page="my-profile">
+                    <span class="icon">👤</span>
+                    <span>My Profile</span>
+                </div>
+                <div class="nav-item" data-page="goal-management">
+                    <span class="icon">🎯</span>
+                    <span>Goal Management</span>
+                </div>
+                <div class="nav-item" data-page="dashboard">
+                    <span class="icon">📈</span>
+                    <span>Analytics Dashboard</span>
+                </div>
+            </nav>
+            <div class="agent-status">
+                <h3>Agent Workflow Status</h3>
+                <div id="agent-activity-panel"></div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="page-content">
+                <div class="onboarding">
+                    <h2>Onboarding AI Tutoring System</h2>
+                    <p>Start your goal-oriented and personalized learning journey — we'll help you set a clear learning goal and tailor a path for you.</p>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: 50%;"></div>
+                    </div>
+                    <div class="learning-goal">
+                        <label for="learning-goal">Enter your learning goal</label>
+                        <input type="text" id="learning-goal" placeholder="e.g., Become proficient in building production-ready ML pipelines">
+                    </div>
+                    <div class="actions">
+                        <button class="button">✨ AI Refinement</button>
+                        <button class="button">Next</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="/static/js/api.js"></script>
+    <script type="module" src="/static/js/state.js"></script>
+    <script type="module" src="/static/js/components.js"></script>
+    <script type="module" src="/static/js/pages/index.js"></script>
+    <script type="module" src="/static/js/router.js"></script>
+    <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
