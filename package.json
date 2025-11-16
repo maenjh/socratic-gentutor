@@ -1,0 +1,23 @@
+{
+  "name": "socratic-gentutor",
+  "version": "1.0.0",
+  "description": "GPU 서버에서 **GenMentor 백엔드(FastAPI)**와 **프론트(Streamlit)**를 Docker Compose로 구동하고, 프론트는 호스트(로컬) 가상환경에서 빠르게 개발할 수 있도록 정리한 운영 매뉴얼입니다. 모델은 `edumcp`에서 내려받아 둔 Qwen2.5-7B-Instruct 캐시를 공유 마운트해 재사용합니다.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maenjh/socratic-gentutor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maenjh/socratic-gentutor/issues"
+  },
+  "homepage": "https://github.com/maenjh/socratic-gentutor#readme",
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "^2025.8.21"
+  }
+}

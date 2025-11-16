@@ -1214,9 +1214,7 @@ class KnowledgeDocumentPage {
         const hasTopic = Boolean(state.topic);
         const hasMessages = Array.isArray(state.messages) && state.messages.length > 0;
         const isLoading = Boolean(state.isLoading);
-        const questionProgress = hasTopic ? Math.min(state.questionCount || 0, MAX_ASSESSMENT_QUESTIONS) : 0;
-        const progressPercent = hasTopic ? Math.min(100, Math.round((questionProgress / MAX_ASSESSMENT_QUESTIONS) * 100)) : 0;
-        const completed = Boolean(state.completed) || questionProgress >= MAX_ASSESSMENT_QUESTIONS;
+        const completed = Boolean(state.completed);
 
         const topicOptions = sessions
             .map(
@@ -1250,16 +1248,7 @@ class KnowledgeDocumentPage {
                   .join('')
             : introCard;
 
-        const progressBar = hasTopic
-            ? `
-                <div class="kd-assessment-progress">
-                    <div class="kd-assessment-progress-track">
-                        <div class="kd-assessment-progress-fill" style="width: ${progressPercent}%"></div>
-            </div>
-                    <span>Question ${questionProgress} / ${MAX_ASSESSMENT_QUESTIONS}</span>
-                </div>
-            `
-            : '';
+        const progressBar = '';
 
         const showWarning = !completed && !isLoading && (state.incorrectCount || 0) >= 2;
         const warningMarkup = showWarning
@@ -1270,14 +1259,13 @@ class KnowledgeDocumentPage {
             ? `<div class="kd-assessment-loading">🤔 Socratic tutor is preparing your next question...</div>`
             : '';
 
-        const inputDisabled = completed || !hasTopic || !hasMessages || isLoading;
-        const inputPlaceholder = completed
-            ? 'Assessment completed'
-            : !hasTopic
-                ? 'Choose a session topic to begin.'
-                : !hasMessages || isLoading
-                    ? 'Tutor is preparing your first question...'
-                    : 'Respond to the tutor...';
+        // completed 조건을 제거하여 답을 두 번 해도 계속 응답할 수 있게 함
+        const inputDisabled = !hasTopic || isLoading;
+        const inputPlaceholder = !hasTopic
+            ? 'Choose a session topic to begin.'
+            : isLoading
+                ? 'Tutor is preparing your first question...'
+                : 'Respond to the tutor...';
 
         const totalAnswers = (state.messages || []).filter((msg) => msg.role === 'user').length;
         const incorrectCount = state.incorrectCount || 0;
@@ -1297,7 +1285,6 @@ class KnowledgeDocumentPage {
                     <div class="kd-assessment-summary-title">✅ Assessment completed!</div>
                     <p><strong>Statistics:</strong> ${totalAnswers} responses, ${incorrectCount} unclear/incorrect.</p>
                     <p>${performanceFeedback}</p>
-                    <button class="button ghost" data-action="restart-assessment">Start New Assessment</button>
                 </div>
             `
             : '';
@@ -1311,6 +1298,7 @@ class KnowledgeDocumentPage {
                         ${topicOptions}
                     </select>
                 </label>
+                <button class="button ghost" data-action="restart-assessment">Start New Assessment</button>
                 ${progressBar}
                 ${warningMarkup}
                 <div class="kd-chat-messages kd-chat-messages--assessment">
@@ -2109,36 +2097,15 @@ class KnowledgeDocumentPage {
                 CHAT_MODEL_PROVIDER,
                 CHAT_MODEL_NAME
             );
-            const normalized = this._normalizeTutorResponse(response);
-            const responseLower = normalized.toLowerCase();
-            const incorrectKeywords = ['incorrect', 'not quite', 'try again', '틀렸', '아니'];
-            const isIncorrect = incorrectKeywords.some((word) => responseLower.includes(word));
 
-            const completed =
-                this.assessmentState.completed ||
-                /great job|well done|excellent understanding|완벽|잘했/i.test(responseLower);
+            const normalizedResponse = this._normalizeTutorResponse(response);
+            // Always continue conversation - never mark as completed
+            const isIncorrect = this._isResponseIndicatingIncorrect(normalizedResponse);
 
-            const nextMessages = [...messages, { role: 'assistant', content: normalized }];
-
-            const askedQuestion =
-                /[?？]/.test(normalized) &&
-                !/great job|excellent|well done|completed|완료|완벽|잘했/i.test(responseLower);
-            const currentCount = this.assessmentState.questionCount || 0;
-            const nextQuestionCount = Math.min(
-                askedQuestion ? currentCount + 1 : currentCount,
-                MAX_ASSESSMENT_QUESTIONS
+            this._appendAssessmentMessage(
+                { role: 'assistant', content: normalizedResponse },
+                { completed: false, incorrect: isIncorrect }
             );
-
-            this.assessmentState = {
-                ...this.assessmentState,
-                messages: nextMessages,
-                questionCount: nextQuestionCount,
-                incorrectCount: this.assessmentState.incorrectCount + (isUncertain || isIncorrect ? 1 : 0),
-                completed: completed || nextQuestionCount >= MAX_ASSESSMENT_QUESTIONS,
-                isLoading: false,
-            };
-            this._persistKnowledgeState({ assessmentState: this.assessmentState });
-            this.render(this.container);
         } catch (error) {
             console.error('[KnowledgeDocument] Assessment response failed', error);
             this.assessmentState = {
@@ -2151,9 +2118,37 @@ class KnowledgeDocumentPage {
     }
 
     _restartAssessment() {
+        // 주제를 초기화하고 상태를 리셋
         this.assessmentState = this._getEmptyAssessmentState();
         this._persistKnowledgeState({ assessmentState: this.assessmentState });
         this.render(this.container);
+    }
+
+    _appendAssessmentMessage(message, options = {}) {
+        const { completed = false, incorrect = false } = options;
+        
+        this.assessmentState = {
+            ...this.assessmentState,
+            messages: [...(this.assessmentState.messages || []), message],
+            questionCount: (this.assessmentState.questionCount || 0) + 1,
+            incorrectCount: incorrect 
+                ? (this.assessmentState.incorrectCount || 0) + 1 
+                : (this.assessmentState.incorrectCount || 0),
+            completed: false, // 항상 false로 유지하여 계속 응답할 수 있게 함
+            isLoading: false,
+        };
+        this._persistKnowledgeState({ assessmentState: this.assessmentState });
+        this.render(this.container);
+    }
+
+    _isResponseIndicatingIncorrect(response) {
+        if (!response || typeof response !== 'string') return false;
+        const lower = response.toLowerCase();
+        const incorrectMarkers = [
+            'incorrect', 'wrong', 'not quite', 'not right', '틀렸', '잘못',
+            'try again', 'think again', '다시 생각', '재고', 'clarify', '명확히'
+        ];
+        return incorrectMarkers.some(marker => lower.includes(marker));
     }
 
     /* ------------------------------------------------------------------ */

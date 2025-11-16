@@ -125,16 +125,27 @@ def draft_knowledge_points_with_llm(
     if search_rag_manager is None and use_search:
         search_rag_manager = SearchRagManager.from_config(default_config)
     def draft_one(kp):
-        return draft_knowledge_point_with_llm(
-            llm,
-            learner_profile,
-            learning_path,
-            learning_session,
-            knowledge_points,
-            kp,
-            use_search=use_search,
-            search_rag_manager=search_rag_manager,
-        )
+        try:
+            return draft_knowledge_point_with_llm(
+                llm,
+                learner_profile,
+                learning_path,
+                learning_session,
+                knowledge_points,
+                kp,
+                use_search=use_search,
+                search_rag_manager=search_rag_manager,
+            )
+        except Exception as e:
+            # Graceful fallback: return minimal draft to avoid 500s upstream
+            try:
+                title = str((kp or {}).get("name") or "Learning Focus").strip() or "Learning Focus"
+            except Exception:
+                title = "Learning Focus"
+            return {
+                "title": title,
+                "content": "Content generation temporarily unavailable. Please proceed to the next section or try regenerating later.",
+            }
 
     if allow_parallel:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:

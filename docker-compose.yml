@@ -18,8 +18,8 @@ services:
     runtime: nvidia  # NVIDIA GPU 런타임
     volumes:
       - ./backend:/app
-      - /../../../edumcp/huggingface_models/qwen_instruct:/root/.cache/huggingface/qwen_instruct  # SharedLLM 모델
-      - /../../../models/openai/gpt-oss-120b:/root/.cache/huggingface/gpt-oss-120b  # 공유 (tokenizer 포함)
+      - /raid/data/shared/edumcp/huggingface_models/qwen_instruct:/root/.cache/huggingface/qwen_instruct  # SharedLLM 모델
+      - /raid/data/shared/models/openai/gpt-oss-120b:/root/.cache/huggingface/gpt-oss-120b 
     networks:
       - genract_moon_net
     restart: unless-stopped
